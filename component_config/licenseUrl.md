@@ -1,0 +1,1 @@
+https://github.com/keboola/component-bigquery-byodb-view-writer/blob/master/LICENSE.md
