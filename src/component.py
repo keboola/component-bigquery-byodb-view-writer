@@ -134,7 +134,7 @@ class Component(ComponentBase):
     @sync_action('get_tables')
     def get_available_tables(self) -> List[SelectElement]:
         """
-        Sync action for getting list of available buckets
+        Sync action for getting list of available tables
         Returns:
 
         """
@@ -146,9 +146,9 @@ class Component(ComponentBase):
         return [SelectElement(value=t['id'], label=f'{t["displayName"]} ({t["name"]})') for t in filtered_tables]
 
     @sync_action('get_columns')
-    def get_available_tables(self) -> List[SelectElement]:
+    def get_available_columns(self) -> List[SelectElement]:
         """
-        Sync action for getting list of available buckets
+        Sync action for getting list of available columns
         Returns:
 
         """
@@ -156,7 +156,6 @@ class Component(ComponentBase):
         sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
 
         table = sapi_client.tables.detail(table_id)
-
         return [SelectElement(value=c, label=c) for c in table.get('columns', [])]
 
     def _get_bucket_parameters(self):
