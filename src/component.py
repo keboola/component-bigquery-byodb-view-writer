@@ -16,7 +16,7 @@ from view_creator import ViewCreator
 # configuration variables
 KEY_SERVICE_ACCOUNT = 'service_account'
 
-KEY_BUCKETS = 'source_buckets'
+KEY_BUCKETS = 'source_bucket'
 KEY_SOURCE_PROJECT_ID = 'source_project_id'
 KEY_SOURCE_DATASET_ID = 'source_dataset_id'
 KEY_SOURCE_TABLE_ID = 'source_table_id'
@@ -129,7 +129,7 @@ class Component(ComponentBase):
         sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
 
         buckets = sapi_client.buckets.list()
-        return [SelectElement(value=b['id'], label=f'({b["stage"]}) {b["name"]}') for b in buckets]
+        return [SelectElement(value=b['id'], label=f'({b["id"]}) {b["name"]}') for b in buckets]
 
     @sync_action('get_tables')
     def get_available_tables(self) -> List[SelectElement]:
@@ -138,18 +138,39 @@ class Component(ComponentBase):
         Returns:
 
         """
-        buckets = self._get_bucket_parameters()
+        bucket = self._get_bucket_parameters()
         sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
 
         tables = sapi_client.tables.list()
-        filtered_tables = [t for t in tables if t['bucket']['id'] in buckets]
+        filtered_tables = [t for t in tables if t['bucket']['id'] == bucket]
         return [SelectElement(value=t['id'], label=f'{t["displayName"]} ({t["name"]})') for t in filtered_tables]
+
+    @sync_action('get_columns')
+    def get_available_tables(self) -> List[SelectElement]:
+        """
+        Sync action for getting list of available buckets
+        Returns:
+
+        """
+        table_id = self._get_table_parameters()
+        sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
+
+        table = sapi_client.tables.detail(table_id)
+
+        return [SelectElement(value=c, label=c) for c in table.get('columns', [])]
 
     def _get_bucket_parameters(self):
         # TODO - implement better
-        buckets = self.configuration.parameters.get(KEY_BUCKETS)
+        bucket = self.configuration.parameters.get(KEY_BUCKETS)
+        if not bucket:
+            raise UserException('No bucket selected.')
+        return bucket
+
+    def _get_table_parameters(self):
+        # TODO - implement better
+        buckets = self.configuration.parameters.get(KEY_SOURCE_TABLE_ID)
         if not buckets:
-            raise UserException('No buckets selected.')
+            raise UserException('No table selected.')
         return buckets
 
     def _get_kbc_root_url(self):

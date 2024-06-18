@@ -43,7 +43,7 @@
                 "async": {
                     "label": "Re-load tables",
                     "action": "get_tables",
-                    "autoload": []
+                    "autoload": ["parameters.source_bucket"]
                 }
             },
             "enum": [],
