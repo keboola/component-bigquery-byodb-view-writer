@@ -1,1 +1,64 @@
-{}
+{
+    "type": "object",
+    "title": "Parameters",
+    "required": [
+    ],
+    "properties": {
+        "source_project_ids": {
+            "type": "string",
+            "options": {
+                "async": {
+                    "label": "Re-load buckets",
+                    "action": "get_buckets"
+                }
+            },
+            "propertyOrder": 1
+        },
+        "source_table_id": {
+            "description": "Source table id",
+            "type": "string",
+            "title": "Source table",
+            "options": {
+                "async": {
+                    "label": "Re-load tables",
+                    "action": "get_tables"
+                }
+            },
+            "propertyOrder": 2
+        },
+        "destination_view_name": {
+            "description": "Destination view name",
+            "type": "string",
+            "title": "Destination view name",
+            "minLength": 1,
+            "propertyOrder": 3
+        },
+        "custom_columns": {
+            "type": "boolean",
+            "default": false,
+            "description": "Map only some columns",
+            "propertyOrder": 4
+        },
+        "columns": {
+            "type": "array",
+            "items": {
+                "enum": [],
+                "type": "string",
+                "minLength": 5,
+                "title": "Column name"
+            },
+            "format": "select",
+            "uniqueItems": true,
+            "options": {
+                "async": {
+                    "label": "Re-load columns",
+                    "action": "get_columns"
+                },
+                "dependencies": {
+                    "custom_columns": true
+                }
+            },
+            "propertyOrder": 5
+        }
+    }
+}

@@ -1,19 +1,32 @@
 {
-  "type": "object",
-  "title": "extractor configuration",
-  "required": [
-    "print_hello"
-  ],
-  "properties": {
-    "print_hello": {
-      "type": "boolean",
-      "title": "Print Hello",
-      "propertyOrder": 1
-    },
-    "debug": {
-      "type": "boolean",
-      "title": "Debug",
-      "propertyOrder": 2
+    "type": "object",
+    "title": "extractor configuration",
+    "required": [
+        "service_account",
+        "source_project_id",
+        "destination_project_id",
+        "destination_dataset_id"
+    ],
+    "properties": {
+        "service_account": {
+            "type": "string",
+            "title": "Service Account - JSON",
+            "propertyOrder": 2
+        },
+        "source_project_id": {
+            "type": "string",
+            "title": "Source Project",
+            "propertyOrder": 1
+        },
+        "destination_project_id": {
+            "type": "string",
+            "title": "Destination Project",
+            "propertyOrder": 1
+        },
+        "destination_dataset_id": {
+            "type": "string",
+            "title": "Destination Dataset",
+            "propertyOrder": 1
+        }
     }
-  }
 }
