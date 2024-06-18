@@ -7,9 +7,7 @@
         "columns": {
             "type": "array",
             "items": {
-                "enum": [
-                    "*"
-                ],
+                "enum": [],
                 "type": "string",
                 "title": "Column name",
                 "minLength": 1
