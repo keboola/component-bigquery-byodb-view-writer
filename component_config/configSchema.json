@@ -10,22 +10,65 @@
     "properties": {
         "service_account": {
             "type": "string",
+            "format": "password",
             "title": "BigQuery Service Account - JSON",
             "propertyOrder": 1
         },
         "source_project_id": {
             "type": "string",
-            "title": "BigQuery Source Project",
+            "title": "Source Project",
+            "items": {
+                "enum": [],
+                "type": "string"
+            },
+            "options": {
+                "async": {
+                    "label": "Re-load projects",
+                    "action": "get_projects",
+                    "autoload": ["parameters.service_account"]
+                }
+            },
+            "enum": [],
+            "format": "select",
+            "description": "Source BigQuery project id",
             "propertyOrder": 2
         },
         "destination_project_id": {
             "type": "string",
-            "title": "BigQuery Destination Project",
+            "title": "Destination Project",
+            "items": {
+                "enum": [],
+                "type": "string"
+            },
+            "options": {
+                "async": {
+                    "label": "Re-load projects",
+                    "action": "get_projects",
+                    "autoload": ["parameters.service_account"]
+                }
+            },
+            "enum": [],
+            "format": "select",
+            "description": "Destination BigQuery project id",
             "propertyOrder": 3
         },
         "destination_dataset_id": {
             "type": "string",
             "title": "BigQuery Destination Dataset",
+            "items": {
+                "enum": [],
+                "type": "string"
+            },
+            "options": {
+                "async": {
+                    "label": "Re-load datasets",
+                    "action": "get_datasets",
+                    "autoload": ["parameters.service_account","parameters.destination_project_id"]
+                }
+            },
+            "enum": [],
+            "format": "select",
+            "description": "Destination BigQuery dataset id",
             "propertyOrder": 4
         }
     }

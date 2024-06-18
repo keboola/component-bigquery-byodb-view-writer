@@ -49,7 +49,6 @@ class Component(ComponentBase):
         super().__init__()
         self.location = None
         self.project = None
-        self.client = None
         self.credentials = None
 
     @staticmethod
@@ -167,16 +166,43 @@ class Component(ComponentBase):
 
     def _get_table_parameters(self):
         # TODO - implement better
-        buckets = self.configuration.parameters.get(KEY_SOURCE_TABLE_ID)
-        if not buckets:
+        table = self.configuration.parameters.get(KEY_SOURCE_TABLE_ID)
+        if not table:
             raise UserException('No table selected.')
-        return buckets
+        return table
 
     def _get_kbc_root_url(self):
         return f'https://{self.environment_variables.stack_id}'
 
     def _get_storage_token(self) -> str:
         return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
+
+    @sync_action('get_projects')
+    def get_available_projects(self) -> List[SelectElement]:
+        """
+        Sync action for getting list of available projects
+        Returns:
+
+        """
+        client = BigqueryClientFactory('', self.get_bigquery_credentials(), location=self.location).get_client()
+        return [SelectElement(value=p.project_id, label=f'{p.project_id}') for p in client.list_projects()]
+
+    @sync_action('get_datasets')
+    def get_available_datasets(self) -> List[SelectElement]:
+        """
+        Sync action for getting list of available datasets
+        Returns:
+
+        """
+        bq_project = self._get_destination_project_parameter()
+        client = BigqueryClientFactory('', self.get_bigquery_credentials(), location=self.location).get_client()
+        return [SelectElement(value=d.dataset_id, label=f'{d.dataset_id}') for d in client.list_datasets(bq_project)]
+
+    def _get_destination_project_parameter(self):
+        project = self.configuration.parameters.get(KEY_DESTINATION_PROJECT_ID)
+        if not project:
+            raise UserException('No project selected.')
+        return project
 
 
 """
