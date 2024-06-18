@@ -3,6 +3,7 @@ Template Component main class.
 
 """
 import logging
+import json
 from typing import List
 
 from kbcstorage.client import Client
@@ -56,6 +57,8 @@ class Component(ComponentBase):
         if not parameters:
             raise UserException('Authorization missing.')
 
+        parameters = json.loads(parameters)
+
         private_key = parameters.get('#private_key')
         if private_key == '' or private_key is None:
             raise UserException('Service account private key missing.')
@@ -68,11 +71,13 @@ class Component(ComponentBase):
         if token_uri == '' or token_uri is None:
             raise UserException('Service account token URI missing.')
 
-    def get_bigquery_credentials(self):
-        credentials_json = (self.configuration.config_data.get('image_parameters', {}).get('service_account')
-                            or self.configuration.parameters.get('service_account'))
+        return parameters
 
-        self.validate_credentials(credentials_json)
+    def get_bigquery_credentials(self):
+        credentials = (self.configuration.config_data.get('image_parameters', {}).get('service_account')
+                       or self.configuration.parameters.get('service_account'))
+
+        credentials_json = self.validate_credentials(credentials)
 
         credentials_json['private_key'] = credentials_json.get('#private_key')
 
