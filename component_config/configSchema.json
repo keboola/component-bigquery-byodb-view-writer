@@ -10,23 +10,23 @@
     "properties": {
         "service_account": {
             "type": "string",
-            "title": "Service Account - JSON",
-            "propertyOrder": 2
+            "title": "BigQuery Service Account - JSON",
+            "propertyOrder": 1
         },
         "source_project_id": {
             "type": "string",
-            "title": "Source Project",
-            "propertyOrder": 1
+            "title": "BigQuery Source Project",
+            "propertyOrder": 2
         },
         "destination_project_id": {
             "type": "string",
-            "title": "Destination Project",
-            "propertyOrder": 1
+            "title": "BigQuery Destination Project",
+            "propertyOrder": 3
         },
         "destination_dataset_id": {
             "type": "string",
-            "title": "Destination Dataset",
-            "propertyOrder": 1
+            "title": "BigQuery Destination Dataset",
+            "propertyOrder": 4
         }
     }
 }
