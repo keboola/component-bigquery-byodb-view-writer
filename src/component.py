@@ -128,7 +128,7 @@ class Component(ComponentBase):
         sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
 
         buckets = sapi_client.buckets.list()
-        return [SelectElement(value=b['id'], label=f'({b["id"]}) {b["name"]}') for b in buckets]
+        return [SelectElement(value=b['id'], label=f'{b["id"]} ({b["name"]})') for b in buckets]
 
     @sync_action('get_tables')
     def get_available_tables(self) -> List[SelectElement]:
