@@ -5,8 +5,8 @@ env:
   # repository variables:
   DOCKERHUB_USER: ${{ vars.DOCKERHUB_USER }}
   KBC_DEVELOPERPORTAL_APP: "kds-team.app-bigquery-byodb-view-writer"
-  KBC_DEVELOPERPORTAL_VENDOR: ${{ vars.KBC_DEVELOPERPORTAL_VENDOR }}
-  KBC_DEVELOPERPORTAL_USERNAME: ${{ vars.KBC_DEVELOPERPORTAL_USERNAME }}
+  KBC_DEVELOPERPORTAL_VENDOR: "kds-team"
+  KBC_DEVELOPERPORTAL_USERNAME: "kds-team+github"
 
   # repository secrets:
   DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }} # recommended for pushing to ECR
