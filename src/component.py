@@ -11,7 +11,7 @@ from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
 
 from google_cloud.bigquery_client import BigqueryClientFactory
-from src.view_creator import ViewCreator
+from view_creator import ViewCreator
 
 # configuration variables
 KEY_SERVICE_ACCOUNT = 'service_account'

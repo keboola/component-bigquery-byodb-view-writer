@@ -4,51 +4,17 @@
     "required": [
     ],
     "properties": {
-        "source_project_ids": {
-            "type": "string",
-            "options": {
-                "async": {
-                    "label": "Re-load buckets",
-                    "action": "get_buckets"
-                }
-            },
-            "propertyOrder": 1
-        },
-        "source_table_id": {
-            "description": "Source table id",
-            "type": "string",
-            "title": "Source table",
-            "options": {
-                "async": {
-                    "label": "Re-load tables",
-                    "action": "get_tables"
-                }
-            },
-            "propertyOrder": 2
-        },
-        "destination_view_name": {
-            "description": "Destination view name",
-            "type": "string",
-            "title": "Destination view name",
-            "minLength": 1,
-            "propertyOrder": 3
-        },
-        "custom_columns": {
-            "type": "boolean",
-            "default": false,
-            "description": "Map only some columns",
-            "propertyOrder": 4
-        },
         "columns": {
             "type": "array",
             "items": {
-                "enum": [],
+                "enum": [
+                    "*"
+                ],
                 "type": "string",
-                "minLength": 5,
-                "title": "Column name"
+                "title": "Column name",
+                "minLength": 1
             },
             "format": "select",
-            "uniqueItems": true,
             "options": {
                 "async": {
                     "label": "Re-load columns",
@@ -58,7 +24,53 @@
                     "custom_columns": true
                 }
             },
-            "propertyOrder": 5
+            "uniqueItems": true,
+            "propertyOrder": 4
+        },
+        "custom_columns": {
+            "type": "boolean",
+            "format": "checkbox",
+            "default": false,
+            "description": "Map only some columns",
+            "propertyOrder": 3
+        },
+        "source_table_id": {
+            "type": "string",
+            "title": "Source table",
+            "items": {
+                "enum": [],
+                "type": "string"
+            },
+            "options": {
+                "async": {
+                    "label": "Re-load tables",
+                    "action": "get_tables",
+                    "autoload": []
+                }
+            },
+            "enum": [],
+            "format": "select",
+            "description": "Source table id",
+            "propertyOrder": 2
+        },
+        "source_bucket": {
+            "title": "Source bucket",
+            "type": "string",
+            "items": {
+                "enum": [],
+                "type": "string"
+            },
+            "options": {
+                "async": {
+                    "label": "Re-load buckets",
+                    "action": "get_buckets",
+                     "autoload": []
+                }
+            },
+            "enum": [],
+            "format": "select",
+            "uniqueItems": true,
+            "propertyOrder": 1
         }
     }
 }
