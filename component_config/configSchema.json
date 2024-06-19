@@ -11,7 +11,8 @@
         "service_account": {
             "type": "string",
             "format": "password",
-            "title": "BigQuery Service Account - JSON",
+            "title": "Service Account",
+            "description": "BigQuery service account key in JSON format",
             "propertyOrder": 1
         },
         "source_project_id": {
@@ -54,7 +55,7 @@
         },
         "destination_dataset_id": {
             "type": "string",
-            "title": "BigQuery Destination Dataset",
+            "title": "Destination Dataset",
             "items": {
                 "enum": [],
                 "type": "string"

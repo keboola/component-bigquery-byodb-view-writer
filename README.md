@@ -1,7 +1,8 @@
 BigQuery BYODB View Writer
 =============
 
-Description
+This component allows Keboola developers to create views from Keboola storage to target datasets in BQ. 
+
 
 **Table of contents:**
 
@@ -13,39 +14,43 @@ Functionality notes
 Prerequisites
 =============
 
-Get the API token, register application, etc.
+Component needs the Google Cloud [Service account](https://cloud.google.com/iam/docs/service-accounts-create#console) (as JSON) with the following roles:
+- For the source project: 
+  - bigquery.datasets.get
+  - bigquery.datasets.update
+  - bigquery.tables.get
+  - bigquery.tables.getData
+  - bigquery.tables.list
+- For the destination project:
+  - bigquery.datasets.get
+  - bigquery.tables.create
+  - bigquery.tables.update
 
-Features
-========
-
-| **Feature**             | **Note**                                      |
-|-------------------------|-----------------------------------------------|
-| Generic UI form         | Dynamic UI form                               |
-| Row Based configuration | Allows structuring the configuration in rows. |
-| oAuth                   | oAuth authentication enabled                  |
-| Incremental loading     | Allows fetching data in new increments.       |
-| Backfill mode           | Support for seamless backfill setup.          |
-| Date range filter       | Specify date range.                           |
-
-Supported endpoints
-===================
-
-If you need more endpoints, please submit your request to
-[ideas.keboola.com](https://ideas.keboola.com/)
 
 Configuration
 =============
 
-Param 1
+Configuration paramaters:
 -------
+- Service Account - JSON
+  - BigQuery service account key in JSON format
+- Source Project
+  - Source BigQuery project id
+- Destination Project
+  - Destination BigQuery project id
+- Destination Dataset
+  - Destination BigQuery dataset id
 
-Param 2
+Configuration row parameters:
 -------
-
-Output
-======
-
-List of tables, foreign keys, schema.
+- Destination View Name
+  - Destination BigQuery view name
+- Source Bucket
+  - Source Keboola storage bucket 
+- Source Table
+  - Source Keboola storage table
+- Custom columns
+  - Allow filtering of columns from the source table
 
 Development
 -----------
