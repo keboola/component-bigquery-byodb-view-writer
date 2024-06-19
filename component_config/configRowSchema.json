@@ -29,10 +29,11 @@
             "propertyOrder": 5
         },
         "custom_columns": {
+            "title": "Custom columns",
             "type": "boolean",
             "format": "checkbox",
             "default": false,
-            "description": "Map only some columns",
+            "description": "Create a view only with some columns",
             "propertyOrder": 4
         },
         "source_table_id": {

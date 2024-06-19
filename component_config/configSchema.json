@@ -1,6 +1,6 @@
 {
     "type": "object",
-    "title": "extractor configuration",
+    "title": "Application configuration",
     "required": [
         "service_account",
         "source_project_id",

@@ -1,7 +1,3 @@
-"""
-Template Component main class.
-
-"""
 import logging
 import json
 from typing import List
@@ -12,25 +8,23 @@ from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
 
 from google_cloud.bigquery_client import BigqueryClientFactory
-from view_creator import ViewCreator
 
 # configuration variables
 KEY_SERVICE_ACCOUNT = 'service_account'
 
 KEY_BUCKETS = 'source_bucket'
 KEY_SOURCE_PROJECT_ID = 'source_project_id'
-KEY_SOURCE_DATASET_ID = 'source_dataset_id'
 KEY_SOURCE_TABLE_ID = 'source_table_id'
 
 KEY_DESTINATION_PROJECT_ID = 'destination_project_id'
 KEY_DESTINATION_DATASET_ID = 'destination_dataset_id'
-KEY_DESTINATION_VIEW_ID = 'destination_view_id'
+KEY_DESTINATION_VIEW_NAME = 'destination_view_name'
 KEY_CUSTOM_COLUMNS = 'custom_columns'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_SERVICE_ACCOUNT, KEY_SOURCE_PROJECT_ID, KEY_SOURCE_DATASET_ID, KEY_SOURCE_TABLE_ID,
-                       KEY_DESTINATION_PROJECT_ID, KEY_DESTINATION_DATASET_ID, KEY_DESTINATION_VIEW_ID]
+REQUIRED_PARAMETERS = [KEY_SERVICE_ACCOUNT, KEY_SOURCE_PROJECT_ID, KEY_SOURCE_TABLE_ID,
+                       KEY_DESTINATION_PROJECT_ID, KEY_DESTINATION_DATASET_ID, KEY_DESTINATION_VIEW_NAME]
 
 SCOPES = ['https://www.googleapis.com/auth/bigquery']
 
@@ -49,8 +43,6 @@ class Component(ComponentBase):
     def __init__(self):
         super().__init__()
         self.location = None
-        self.project = None
-        self.credentials = None
 
     @staticmethod
     def validate_credentials(parameters):
@@ -74,6 +66,8 @@ class Component(ComponentBase):
         return parameters
 
     def get_bigquery_credentials(self):
+        self.location = self.configuration.config_data.get('image_parameters', {}).get('location') or 'US'
+
         credentials = (self.configuration.config_data.get('image_parameters', {}).get('service_account')
                        or self.configuration.parameters.get('service_account'))
 
@@ -96,32 +90,41 @@ class Component(ComponentBase):
         self.validate_configuration_parameters(REQUIRED_PARAMETERS)
         params = self.configuration.parameters
 
-        source_project_id = params.get(KEY_SOURCE_PROJECT_ID)
-        destination_project_id = params.get(KEY_DESTINATION_PROJECT_ID)
+        # expand and unify KBC table id to dataset and table (in.c-test.Account > in_c_test, Account)
+        source_dataset, source_table = self.expand_table_id(params.get(KEY_SOURCE_TABLE_ID))
 
-        dest_client = BigqueryClientFactory(destination_project_id, self.get_bigquery_credentials(),
-                                            location=self.location).get_client()
+        # create bigquery client
+        bg = BigqueryClientFactory(self.get_bigquery_credentials(), self.location)
 
-        src_client = BigqueryClientFactory(source_project_id, self.get_bigquery_credentials(),
-                                           location=self.location).get_client()
+        # get source and destination datasets
+        source_dataset = bg.find_dataset(params.get(KEY_SOURCE_PROJECT_ID), source_dataset)
+        destination_dataset = bg.find_dataset(params.get(KEY_DESTINATION_PROJECT_ID),
+                                              params.get(KEY_DESTINATION_DATASET_ID))
 
-        view_creator = ViewCreator(dest_client, src_client,
-                                   source_project_id,
-                                   params.get(KEY_SOURCE_DATASET_ID),
-                                   params.get(KEY_SOURCE_TABLE_ID),
-                                   destination_project_id,
-                                   params.get(KEY_DESTINATION_DATASET_ID),
-                                   params.get(KEY_DESTINATION_VIEW_ID))
-        view_creator.create_view()
+        # add check if dataset exist is in the same region
+        if source_dataset.location != destination_dataset.location:
+            raise Exception(
+                "Source and destination datasets are in different locations! View creation is not supported.")
+        else:
+            logging.info(f"Source and destination datasets are in the same location: {source_dataset.location}")
+
+        # create view
+        bg.create_view(destination_dataset, source_dataset, source_table, params.get(KEY_CUSTOM_COLUMNS),
+                       params.get(KEY_DESTINATION_VIEW_NAME))
 
     @staticmethod
     def expand_table_id(table_id):
+        # in.c-test.Account > in_c_test, Account
         split = table_id.split('.')
         stage = split[0]
-        bucket = split[1]
-        table = split[2]
-        dataset = f"{stage}_{bucket}"
-        return dataset, table
+        bucket = split[1].replace('-', '_')
+        return f"{stage}_{bucket}", split[2]
+
+    def _get_kbc_root_url(self):
+        return f'https://{self.environment_variables.stack_id}'
+
+    def _get_storage_token(self) -> str:
+        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
 
     @sync_action('get_buckets')
     def get_available_buckets(self) -> List[SelectElement]:
@@ -142,7 +145,9 @@ class Component(ComponentBase):
         Returns:
 
         """
-        bucket = self._get_bucket_parameters()
+        bucket = self.configuration.parameters.get(KEY_BUCKETS)
+        if not bucket:
+            raise UserException('No bucket selected.')
         sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
 
         tables = sapi_client.tables.list()
@@ -156,31 +161,13 @@ class Component(ComponentBase):
         Returns:
 
         """
-        table_id = self._get_table_parameters()
+        table_id = table = self.configuration.parameters.get(KEY_SOURCE_TABLE_ID)
+        if not table:
+            raise UserException('No table selected.')
         sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
 
         table = sapi_client.tables.detail(table_id)
         return [SelectElement(value=c, label=c) for c in table.get('columns', [])]
-
-    def _get_bucket_parameters(self):
-        # TODO - implement better
-        bucket = self.configuration.parameters.get(KEY_BUCKETS)
-        if not bucket:
-            raise UserException('No bucket selected.')
-        return bucket
-
-    def _get_table_parameters(self):
-        # TODO - implement better
-        table = self.configuration.parameters.get(KEY_SOURCE_TABLE_ID)
-        if not table:
-            raise UserException('No table selected.')
-        return table
-
-    def _get_kbc_root_url(self):
-        return f'https://{self.environment_variables.stack_id}'
-
-    def _get_storage_token(self) -> str:
-        return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
 
     @sync_action('get_projects')
     def get_available_projects(self) -> List[SelectElement]:
@@ -189,8 +176,9 @@ class Component(ComponentBase):
         Returns:
 
         """
-        client = BigqueryClientFactory('', self.get_bigquery_credentials(), location=self.location).get_client()
-        return [SelectElement(value=p.project_id, label=f'{p.project_id}') for p in client.list_projects()]
+        bq = BigqueryClientFactory(credentials=self.get_bigquery_credentials(), location=self.location)
+        projects = bq.client.list_projects()
+        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects]
 
     @sync_action('get_datasets')
     def get_available_datasets(self) -> List[SelectElement]:
@@ -199,15 +187,11 @@ class Component(ComponentBase):
         Returns:
 
         """
-        bq_project = self._get_destination_project_parameter()
-        client = BigqueryClientFactory('', self.get_bigquery_credentials(), location=self.location).get_client()
-        return [SelectElement(value=d.dataset_id, label=f'{d.dataset_id}') for d in client.list_datasets(bq_project)]
-
-    def _get_destination_project_parameter(self):
-        project = self.configuration.parameters.get(KEY_DESTINATION_PROJECT_ID)
-        if not project:
+        bq_project = self.configuration.parameters.get(KEY_DESTINATION_PROJECT_ID)
+        if not bq_project:
             raise UserException('No project selected.')
-        return project
+        bq = BigqueryClientFactory(credentials=self.get_bigquery_credentials(), location=self.location)
+        return [SelectElement(value=d.dataset_id, label=f'{d.dataset_id}') for d in bq.client.list_datasets(bq_project)]
 
 
 """
