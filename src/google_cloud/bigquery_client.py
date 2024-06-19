@@ -5,7 +5,7 @@ from google.oauth2 import service_account
 from google.api_core.exceptions import NotFound
 
 
-class BigqueryClientFactory(bigquery.Client):
+class BigqueryClient:
     @staticmethod
     def get_service_account_credentials(service_account_info, scopes):
         return service_account.Credentials.from_service_account_info(
@@ -13,12 +13,8 @@ class BigqueryClientFactory(bigquery.Client):
             scopes=scopes
         )
 
-    def __init__(self, credentials: service_account.Credentials, location: str = 'US'):
-        super().__init__()
+    def __init__(self, credentials, location):
         self.client = bigquery.Client(credentials=credentials, location=location)
-
-    def get_client(self) -> bigquery.Client:
-        return self.client
 
     def _update_access(self, source_dataset, view):
         access_entries = source_dataset.access_entries

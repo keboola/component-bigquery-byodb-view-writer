@@ -7,7 +7,7 @@ from keboola.component.base import ComponentBase, sync_action
 from keboola.component.exceptions import UserException
 from keboola.component.sync_actions import SelectElement
 
-from google_cloud.bigquery_client import BigqueryClientFactory
+from google_cloud.bigquery_client import BigqueryClient
 
 # configuration variables
 KEY_SERVICE_ACCOUNT = 'service_account'
@@ -76,7 +76,7 @@ class Component(ComponentBase):
         credentials_json['private_key'] = credentials_json.get('#private_key')
 
         try:
-            return BigqueryClientFactory.get_service_account_credentials(credentials_json, SCOPES)
+            return BigqueryClient.get_service_account_credentials(credentials_json, SCOPES)
         except ValueError as err:
             message = 'Cannot get credentials from service account %s. Reason "%s".' % (
                 credentials_json.get('client_email'), str(err))
@@ -94,7 +94,7 @@ class Component(ComponentBase):
         source_dataset, source_table = self.expand_table_id(params.get(KEY_SOURCE_TABLE_ID))
 
         # create bigquery client
-        bg = BigqueryClientFactory(self.get_bigquery_credentials(), self.location)
+        bg = BigqueryClient(self.get_bigquery_credentials(), self.location)
 
         # get source and destination datasets
         source_dataset = bg.find_dataset(params.get(KEY_SOURCE_PROJECT_ID), source_dataset)
@@ -176,7 +176,7 @@ class Component(ComponentBase):
         Returns:
 
         """
-        bq = BigqueryClientFactory(credentials=self.get_bigquery_credentials(), location=self.location)
+        bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
         projects = bq.client.list_projects()
         return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects]
 
@@ -190,7 +190,7 @@ class Component(ComponentBase):
         bq_project = self.configuration.parameters.get(KEY_DESTINATION_PROJECT_ID)
         if not bq_project:
             raise UserException('No project selected.')
-        bq = BigqueryClientFactory(credentials=self.get_bigquery_credentials(), location=self.location)
+        bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
         return [SelectElement(value=d.dataset_id, label=f'{d.dataset_id}') for d in bq.client.list_datasets(bq_project)]
 
 
