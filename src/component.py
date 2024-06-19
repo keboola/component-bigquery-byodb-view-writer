@@ -90,6 +90,7 @@ class Component(ComponentBase):
         self.validate_configuration_parameters(REQUIRED_PARAMETERS)
         params = self.configuration.parameters
 
+        # check if source BigQuery project is actual KBC project
         if self._get_kbc_project_id() not in params.get(KEY_SOURCE_PROJECT_ID):
             raise UserException('Another project storage backend is not supported!')
 
