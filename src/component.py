@@ -90,6 +90,9 @@ class Component(ComponentBase):
         self.validate_configuration_parameters(REQUIRED_PARAMETERS)
         params = self.configuration.parameters
 
+        if self._get_kbc_project_id() not in params.get(KEY_SOURCE_PROJECT_ID):
+            raise UserException('Another project storage backend is not supported!')
+
         # expand and unify KBC table id to dataset and table (in.c-test.Account > in_c_test, Account)
         source_dataset, source_table = self.expand_table_id(params.get(KEY_SOURCE_TABLE_ID))
 
@@ -123,11 +126,14 @@ class Component(ComponentBase):
     def _get_kbc_root_url(self):
         return f'https://{self.environment_variables.stack_id}'
 
+    def _get_kbc_project_id(self):
+        return self.environment_variables.project_id
+
     def _get_storage_token(self) -> str:
         return self.configuration.parameters.get('#storage_token') or self.environment_variables.token
 
     @sync_action('get_buckets')
-    def get_available_buckets(self) -> List[SelectElement]:
+    def get_buckets(self) -> List[SelectElement]:
         """
         Sync action for getting list of available buckets
         Returns:
@@ -139,7 +145,7 @@ class Component(ComponentBase):
         return [SelectElement(value=b['id'], label=f'{b["id"]} ({b["name"]})') for b in buckets]
 
     @sync_action('get_tables')
-    def get_available_tables(self) -> List[SelectElement]:
+    def get_tables(self) -> List[SelectElement]:
         """
         Sync action for getting list of available tables
         Returns:
@@ -155,7 +161,7 @@ class Component(ComponentBase):
         return [SelectElement(value=t['id'], label=f'{t["displayName"]} ({t["name"]})') for t in filtered_tables]
 
     @sync_action('get_columns')
-    def get_available_columns(self) -> List[SelectElement]:
+    def get_columns(self) -> List[SelectElement]:
         """
         Sync action for getting list of available columns
         Returns:
@@ -169,8 +175,8 @@ class Component(ComponentBase):
         table = sapi_client.tables.detail(table_id)
         return [SelectElement(value=c, label=c) for c in table.get('columns', [])]
 
-    @sync_action('get_projects')
-    def get_available_projects(self) -> List[SelectElement]:
+    @sync_action('get_source_projects')
+    def get_source_projects(self) -> List[SelectElement]:
         """
         Sync action for getting list of available projects
         Returns:
@@ -178,10 +184,31 @@ class Component(ComponentBase):
         """
         bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
         projects = bq.client.list_projects()
-        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects]
+        kbc_project_id = self._get_kbc_project_id()
+        # for secure we need to filter only current projects by prefix
+        # we cannot option to get KBC BQ projects id
+        project_prefix = f'sapi-{kbc_project_id}-'
+        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
+                p.project_id.startswith(project_prefix)]
+
+    @sync_action('get_source_projects')
+    def get_destinations_projects(self) -> List[SelectElement]:
+        """
+        Sync action for getting list of available projects
+        Returns:
+
+        """
+        bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
+        projects = bq.client.list_projects()
+        kbc_project_id = self._get_kbc_project_id()
+        # for secure we need to filter only current projects by prefix
+        # we cannot option to get KBC BQ projects id
+        project_prefix = f'sapi-{kbc_project_id}-'
+        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if not
+                p.project_id.startswith(project_prefix)]
 
     @sync_action('get_datasets')
-    def get_available_datasets(self) -> List[SelectElement]:
+    def get_datasets(self) -> List[SelectElement]:
         """
         Sync action for getting list of available datasets
         Returns:

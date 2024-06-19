@@ -16,15 +16,19 @@ Prerequisites
 
 Component needs the Google Cloud [Service account](https://cloud.google.com/iam/docs/service-accounts-create#console) (as JSON) with the following roles:
 - For the source project: 
-  - bigquery.datasets.get
-  - bigquery.datasets.update
-  - bigquery.tables.get
-  - bigquery.tables.getData
-  - bigquery.tables.list
+    - role bigquery.user
+    - and the following permissions:
+        - bigquery.datasets.get
+        - bigquery.datasets.update
+        - bigquery.tables.get
+        - bigquery.tables.getData
+        - bigquery.tables.list
 - For the destination project:
-  - bigquery.datasets.get
-  - bigquery.tables.create
-  - bigquery.tables.update
+  - role bigquery.user
+  - and the following permissions:
+      - bigquery.tables.create
+      - bigquery.tables.get
+      - bigquery.tables.update
 
 
 Configuration
