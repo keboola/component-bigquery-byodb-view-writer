@@ -192,8 +192,8 @@ class Component(ComponentBase):
         return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
                 p.project_id.startswith(project_prefix)]
 
-    @sync_action('get_source_projects')
-    def get_destinations_projects(self) -> List[SelectElement]:
+    @sync_action('get_destination_projects')
+    def get_destination_projects(self) -> List[SelectElement]:
         """
         Sync action for getting list of available projects
         Returns:
