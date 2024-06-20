@@ -20,6 +20,7 @@ KEY_DESTINATION_PROJECT_ID = 'destination_project_id'
 KEY_DESTINATION_DATASET_ID = 'destination_dataset_id'
 KEY_DESTINATION_VIEW_NAME = 'destination_view_name'
 KEY_CUSTOM_COLUMNS = 'custom_columns'
+KEY_COLUMNS = 'columns'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
@@ -105,6 +106,7 @@ class Component(ComponentBase):
         destination_dataset = bg.find_dataset(params.get(KEY_DESTINATION_PROJECT_ID),
                                               params.get(KEY_DESTINATION_DATASET_ID))
 
+        custom_columns = (params.get(KEY_COLUMNS) if params.get(KEY_CUSTOM_COLUMNS) else None)
         # add check if dataset exist is in the same region
         if source_dataset.location != destination_dataset.location:
             raise Exception(
@@ -113,7 +115,7 @@ class Component(ComponentBase):
             logging.info(f"Source and destination datasets are in the same location: {source_dataset.location}")
 
         # create view
-        bg.create_view(destination_dataset, source_dataset, source_table, params.get(KEY_CUSTOM_COLUMNS),
+        bg.create_view(destination_dataset, source_dataset, source_table, custom_columns,
                        params.get(KEY_DESTINATION_VIEW_NAME))
 
     @staticmethod
