@@ -207,8 +207,8 @@ class Component(ComponentBase):
         # for secure we need to filter only current projects by prefix
         # we cannot option to get KBC BQ projects id
         project_prefix = f'sapi-{kbc_project_id}-'
-        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if not
-        p.project_id.startswith(project_prefix)]
+        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
+                not p.project_id.startswith(project_prefix)]
 
     @sync_action('get_datasets')
     def get_datasets(self) -> List[SelectElement]:
