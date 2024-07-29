@@ -2,13 +2,13 @@
     "type": "object",
     "title": "Application configuration",
     "required": [
-        "service_account",
+        "#service_account",
         "source_project_id",
         "destination_project_id",
         "destination_dataset_id"
     ],
     "properties": {
-        "service_account": {
+        "#service_account": {
             "type": "string",
             "format": "password",
             "title": "Service Account",
@@ -23,10 +23,15 @@
                 "type": "string"
             },
             "options": {
+                "select": {
+                    "create": true
+                },
                 "async": {
                     "label": "Re-load projects",
                     "action": "get_source_projects",
-                    "autoload": ["parameters.service_account"]
+                    "autoload": [
+                        "parameters.service_account"
+                    ]
                 }
             },
             "enum": [],
@@ -45,7 +50,9 @@
                 "async": {
                     "label": "Re-load projects",
                     "action": "get_destination_projects",
-                    "autoload": ["parameters.service_account"]
+                    "autoload": [
+                        "parameters.service_account"
+                    ]
                 }
             },
             "enum": [],
@@ -64,7 +71,10 @@
                 "async": {
                     "label": "Re-load datasets",
                     "action": "get_datasets",
-                    "autoload": ["parameters.service_account","parameters.destination_project_id"]
+                    "autoload": [
+                        "parameters.service_account",
+                        "parameters.destination_project_id"
+                    ]
                 }
             },
             "enum": [],

@@ -10,7 +10,7 @@ from keboola.component.sync_actions import SelectElement
 from google_cloud.bigquery_client import BigqueryClient
 
 # configuration variables
-KEY_SERVICE_ACCOUNT = 'service_account'
+KEY_SERVICE_ACCOUNT = '#service_account'
 
 KEY_BUCKETS = 'source_bucket'
 KEY_SOURCE_PROJECT_ID = 'source_project_id'
@@ -52,7 +52,7 @@ class Component(ComponentBase):
 
         parameters = json.loads(parameters)
 
-        private_key = parameters.get('#private_key')
+        private_key = parameters.get('private_key')
         if private_key == '' or private_key is None:
             raise UserException('Service account private key missing.')
 
@@ -69,12 +69,12 @@ class Component(ComponentBase):
     def get_bigquery_credentials(self):
         self.location = self.configuration.config_data.get('image_parameters', {}).get('location') or 'US'
 
-        credentials = (self.configuration.config_data.get('image_parameters', {}).get('service_account')
-                       or self.configuration.parameters.get('service_account'))
+        credentials = (self.configuration.config_data.get('image_parameters', {}).get(KEY_SERVICE_ACCOUNT)
+                       or self.configuration.parameters.get(KEY_SERVICE_ACCOUNT))
 
         credentials_json = self.validate_credentials(credentials)
 
-        credentials_json['private_key'] = credentials_json.get('#private_key')
+        # credentials_json['private_key'] = credentials_json.get('private_key')
 
         try:
             return BigqueryClient.get_service_account_credentials(credentials_json, SCOPES)
@@ -191,8 +191,11 @@ class Component(ComponentBase):
         # for secure we need to filter only current projects by prefix
         # we cannot option to get KBC BQ projects id
         project_prefix = f'sapi-{kbc_project_id}-'
-        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
-                p.project_id.startswith(project_prefix)]
+        projects = [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
+                    p.project_id.startswith(project_prefix)]
+        if len(projects) == 0:
+            raise UserException('No projects found. You cannot have access to any project or list projects.')
+        return projects
 
     @sync_action('get_destination_projects')
     def get_destination_projects(self) -> List[SelectElement]:
