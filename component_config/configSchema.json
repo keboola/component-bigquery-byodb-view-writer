@@ -23,9 +23,7 @@
                 "type": "string"
             },
             "options": {
-                "select": {
-                    "create": true
-                },
+                "creatable": true,
                 "async": {
                     "label": "Re-load projects",
                     "action": "get_source_projects",
@@ -47,6 +45,7 @@
                 "type": "string"
             },
             "options": {
+                "creatable": true,
                 "async": {
                     "label": "Re-load projects",
                     "action": "get_destination_projects",
@@ -68,6 +67,7 @@
                 "type": "string"
             },
             "options": {
+                "creatable": true,
                 "async": {
                     "label": "Re-load datasets",
                     "action": "get_datasets",
