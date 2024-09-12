@@ -7,6 +7,8 @@ This component allows Keboola developers to create authorized views on the table
 Functionality notes
 ===================
 
+It is possible to define the name of the view and only some columns can be selected.
+
 Prerequisites
 =============
 
