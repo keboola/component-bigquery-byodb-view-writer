@@ -1,12 +1,8 @@
 BigQuery BYODB View Writer
 =============
 
-This component allows Keboola developers to create views from Keboola storage to target datasets in BQ. 
+This component allows Keboola developers to create authorized views on the tables in Keboola storage and propagate them to the target datasets in BQ (BYODB). [More about Authorized Views here](https://cloud.google.com/bigquery/docs/authorized-views)
 
-
-**Table of contents:**
-
-[TOC]
 
 Functionality notes
 ===================
