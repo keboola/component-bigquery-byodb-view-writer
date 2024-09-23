@@ -37,7 +37,8 @@ Configuration paramaters:
 - Service Account - JSON
   - BigQuery service account key in JSON format
 - Source Project
-  - Source BigQuery project id
+  - Keboola Project ID ("sapi-XXXX-ZZZZ")
+    - BigQuery projects is created while creating the new Keboola project, it is formed by combining the project number and a random string. The component does not have chance to a find it, unfortunately.
 - Destination Project
   - Destination BigQuery project id
 - Destination Dataset

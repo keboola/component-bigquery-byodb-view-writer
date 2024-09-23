@@ -52,7 +52,7 @@ class BigqueryClient:
         if custom_columns:
             return f"""
                       SELECT
-                          {', '.join(custom_columns)}
+                          {', '.join([f'`{col}`' for col in custom_columns])}
                       FROM
                           `{source_project}`.`{source_dataset.dataset_id}`.`{source_table_id}`
                   """
