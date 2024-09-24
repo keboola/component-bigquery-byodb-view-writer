@@ -48,15 +48,18 @@ class BigqueryClient:
             return bigquery.Table(dataset.table(view_id))
 
     @staticmethod
-    def _compose_view_query(source_project, source_dataset, source_table_id, custom_columns):
+    def _compose_view_query(source_project, source_dataset, source_table_id, destination_dataset, view_name,
+                            custom_columns):
         if custom_columns:
             return f"""
+                    CREATE OR REPLACE VIEW `{destination_dataset}`.`{view_name}` AS
                       SELECT
                           {', '.join([f'`{col}`' for col in custom_columns])}
                       FROM
                           `{source_project}`.`{source_dataset.dataset_id}`.`{source_table_id}`
                   """
         return f"""
+                CREATE OR REPLACE VIEW `{destination_dataset}`.`{view_name}` AS
                   SELECT
                       *
                   FROM
@@ -69,17 +72,10 @@ class BigqueryClient:
 
         self.client.project = destination_dataset.project
 
-        view = self._get_view(destination_dataset, view_name)
+        job = self.client.query(query)
 
-        if not view.created:
-            view_tmp = view
-            view_tmp.view_query = query
-            logging.info(f"Creating view {view_tmp.reference.to_api_repr()} with query {' '.join(query.split())}")
-            created_view = self.client.create_table(view_tmp)
-            logging.info(f"View {created_view.reference.to_api_repr()} has been created.")
-            self._update_access(source_dataset, created_view)
-        else:
-            view.view_query = query
-            logging.info(f"Updating view {view.reference.to_api_repr()} with query {' '.join(query.split())}")
-            updated_view = self.client.update_table(view, ["view_query"])
-            logging.info(f"View {updated_view.reference.to_api_repr()} has been updated.")
+        logging.info(
+            f"View {job.destination.project}.{job.destination.dataset_id}.{job.destination.table_id} has been created.")
+
+        created_view = self._get_view(destination_dataset, view_name)
+        self._update_access(source_dataset, created_view)
