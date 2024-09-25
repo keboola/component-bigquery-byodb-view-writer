@@ -71,15 +71,13 @@ class BigqueryClient:
 
         view = self._get_view(destination_dataset, view_name)
 
-        if not view.created:
-            view_tmp = view
-            view_tmp.view_query = query
-            logging.info(f"Creating view {view_tmp.reference.to_api_repr()} with query {' '.join(query.split())}")
-            created_view = self.client.create_table(view_tmp)
-            logging.info(f"View {created_view.reference.to_api_repr()} has been created.")
-            self._update_access(source_dataset, created_view)
-        else:
-            view.view_query = query
-            logging.info(f"Updating view {view.reference.to_api_repr()} with query {' '.join(query.split())}")
-            updated_view = self.client.update_table(view, ["view_query"])
-            logging.info(f"View {updated_view.reference.to_api_repr()} has been updated.")
+        if view.created:
+            self.client.delete_table(view, not_found_ok=True)
+            logging.info(f"Deleting view {view.reference.to_api_repr()}")
+            view.schema = None
+
+        view.view_query = query
+        logging.info(f"Creating view {view.reference.to_api_repr()} with query {' '.join(query.split())}")
+        created_view = self.client.create_table(view)
+        logging.info(f"View {created_view.reference.to_api_repr()} has been created.")
+        self._update_access(source_dataset, created_view)

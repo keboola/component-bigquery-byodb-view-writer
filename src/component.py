@@ -67,14 +67,12 @@ class Component(ComponentBase):
         return parameters
 
     def get_bigquery_credentials(self):
-        self.location = self.configuration.config_data.get('image_parameters', {}).get('location') or 'US'
+        self.location = self.configuration.config_data.get('image_parameters', {}).get('location') or 'EU'
 
         credentials = (self.configuration.config_data.get('image_parameters', {}).get(KEY_SERVICE_ACCOUNT)
                        or self.configuration.parameters.get(KEY_SERVICE_ACCOUNT))
 
         credentials_json = self.validate_credentials(credentials)
-
-        # credentials_json['private_key'] = credentials_json.get('private_key')
 
         try:
             return BigqueryClient.get_service_account_credentials(credentials_json, SCOPES)
