@@ -1,1 +1,1 @@
-BigQuery BYODB View Writer short description
+Component for creating authorized views in BigQuery that connects data from Keboola Storage with target datasets in BigQuery through BYODB (Bring Your Own Database).
