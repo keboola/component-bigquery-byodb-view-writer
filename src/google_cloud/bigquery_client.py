@@ -69,13 +69,13 @@ class BigqueryClient:
 
         self.client.project = destination_dataset.project
 
-        view = self._get_view(destination_dataset, view_name)
+        view_ref = self._get_view(destination_dataset, view_name)
 
-        if view.created:
-            self.client.delete_table(view, not_found_ok=True)
-            logging.info(f"Deleting view {view.reference.to_api_repr()}")
-            view.schema = None
+        if view_ref.created:
+            self.client.delete_table(view_ref, not_found_ok=True)
+            logging.info(f"Deleting view {view_ref.reference.to_api_repr()}")
 
+        view = bigquery.Table(view_ref)
         view.view_query = query
         logging.info(f"Creating view {view.reference.to_api_repr()} with query {' '.join(query.split())}")
         created_view = self.client.create_table(view)
