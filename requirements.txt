@@ -1,9 +1,0 @@
-keboola.component
-keboola.utils
-keboola.http-client
-mock~=5.1.0
-freezegun~=1.5.1
-google-auth
-google-cloud-bigquery
-google-cloud-resource-manager
-git+https://github.com/keboola/sapi-python-client.git
