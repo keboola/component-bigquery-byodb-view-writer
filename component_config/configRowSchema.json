@@ -1,8 +1,7 @@
 {
     "type": "object",
     "title": "Parameters",
-    "required": [
-    ],
+    "required": [],
     "properties": {
         "columns": {
             "type": "array",
@@ -28,22 +27,44 @@
             "uniqueItems": true,
             "propertyOrder": 5
         },
+        "source_bucket": {
+            "enum": [],
+            "type": "string",
+            "items": {
+                "enum": [],
+                "type": "string"
+            },
+            "title": "Source bucket",
+            "format": "select",
+            "options": {
+                "async": {
+                    "label": "Re-load buckets",
+                    "action": "get_buckets",
+                    "autoload": []
+                }
+            },
+            "uniqueItems": true,
+            "propertyOrder": 2
+        },
         "custom_columns": {
-            "title": "Custom columns",
             "type": "boolean",
+            "title": "Custom columns",
             "format": "checkbox",
             "default": false,
             "description": "Create a view only with some columns",
             "propertyOrder": 4
         },
         "source_table_id": {
+            "enum": [],
             "type": "string",
-            "title": "Source table",
             "items": {
                 "enum": [],
                 "type": "string"
             },
+            "title": "Source table",
+            "format": "select",
             "options": {
+                "tooltip": "If a table is not selected, the run tries to delete the destination view (if it exists)!",
                 "async": {
                     "label": "Re-load tables",
                     "action": "get_tables",
@@ -52,29 +73,8 @@
                     ]
                 }
             },
-            "enum": [],
-            "format": "select",
-            "description": "Source table id",
+            "description": "Source table ID, if a table is not selected, the destination view will be deleted (if it exists)!",
             "propertyOrder": 3
-        },
-        "source_bucket": {
-            "title": "Source bucket",
-            "type": "string",
-            "items": {
-                "enum": [],
-                "type": "string"
-            },
-            "options": {
-                "async": {
-                    "label": "Re-load buckets",
-                    "action": "get_buckets",
-                    "autoload": []
-                }
-            },
-            "enum": [],
-            "format": "select",
-            "uniqueItems": true,
-            "propertyOrder": 2
         },
         "destination_view_name": {
             "type": "string",

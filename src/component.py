@@ -24,7 +24,7 @@ KEY_COLUMNS = 'columns'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_SERVICE_ACCOUNT, KEY_SOURCE_PROJECT_ID, KEY_SOURCE_TABLE_ID,
+REQUIRED_PARAMETERS = [KEY_SERVICE_ACCOUNT, KEY_SOURCE_PROJECT_ID,
                        KEY_DESTINATION_PROJECT_ID, KEY_DESTINATION_DATASET_ID, KEY_DESTINATION_VIEW_NAME]
 
 SCOPES = ['https://www.googleapis.com/auth/bigquery']
@@ -93,28 +93,51 @@ class Component(ComponentBase):
         if self._get_kbc_project_id() not in params.get(KEY_SOURCE_PROJECT_ID):
             raise UserException('Another project storage backend is not supported!')
 
-        # expand and unify KBC table id to dataset and table (in.c-test.Account > in_c_test, Account)
-        source_dataset, source_table = self.expand_table_id(params.get(KEY_SOURCE_TABLE_ID))
-
         # create bigquery client
         bg = BigqueryClient(self.get_bigquery_credentials(), self.location)
 
-        # get source and destination datasets
-        source_dataset = bg.find_dataset(params.get(KEY_SOURCE_PROJECT_ID), source_dataset)
+        # get destination datasets
         destination_dataset = bg.find_dataset(params.get(KEY_DESTINATION_PROJECT_ID),
                                               params.get(KEY_DESTINATION_DATASET_ID))
+        if params.get(KEY_SOURCE_TABLE_ID):
+            # expand and unify KBC table id to dataset and table (in.c-test.Account > in_c_test, Account)
+            source_dataset, source_table = self.expand_table_id(params.get(KEY_SOURCE_TABLE_ID))
 
-        custom_columns = (params.get(KEY_COLUMNS) if params.get(KEY_CUSTOM_COLUMNS) else None)
-        # add check if dataset exist is in the same region
-        if source_dataset.location != destination_dataset.location:
-            raise Exception(
-                "Source and destination datasets are in different locations! View creation is not supported.")
+            sapi_client = Client(self._get_kbc_root_url(), self._get_storage_token())
+
+            tables = sapi_client.tables.detail(params.get(KEY_SOURCE_TABLE_ID))
+
+            source_table_columns_descriptions = self._get_fields_descriptions(tables)
+
+            # get destination datasets
+            source_dataset = bg.find_dataset(params.get(KEY_SOURCE_PROJECT_ID), source_dataset)
+
+            custom_columns = (params.get(KEY_COLUMNS) if params.get(KEY_CUSTOM_COLUMNS) else None)
+            # add check if dataset exist is in the same region
+            if source_dataset.location != destination_dataset.location:
+                raise Exception(
+                    "Source and destination datasets are in different locations! View creation is not supported.")
+            else:
+                logging.info(f"Source and destination datasets are in the same location: {source_dataset.location}")
+
+            # create view
+            bg.create_view(destination_dataset, source_dataset, source_table, source_table_columns_descriptions,
+                           custom_columns,
+                           params.get(KEY_DESTINATION_VIEW_NAME))
         else:
-            logging.info(f"Source and destination datasets are in the same location: {source_dataset.location}")
+            # delete view if exists
+            logging.warning('No source table selected. Deleting view if exists.')
+            bg.delete_view(destination_dataset, params.get(KEY_DESTINATION_VIEW_NAME))
 
-        # create view
-        bg.create_view(destination_dataset, source_dataset, source_table, custom_columns,
-                       params.get(KEY_DESTINATION_VIEW_NAME))
+    @staticmethod
+    def _get_fields_descriptions(tables):
+        fields_descriptions = {}
+        columns_metadata = tables.get('columnMetadata')
+        for column_name, metadata in columns_metadata.items():
+            for item in metadata:
+                if 'KBC.description' == item.get('key'):
+                    fields_descriptions[column_name] = item.get('value')
+        return fields_descriptions
 
     @staticmethod
     def expand_table_id(table_id):
