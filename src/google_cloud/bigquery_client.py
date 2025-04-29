@@ -13,8 +13,8 @@ class BigqueryClient:
             scopes=scopes
         )
 
-    def __init__(self, credentials, location):
-        self.client = bigquery.Client(credentials=credentials, location=location)
+    def __init__(self, credentials):
+        self.client = bigquery.Client(credentials=credentials)
 
     def _update_access(self, source_dataset, view):
         access_entries = source_dataset.access_entries

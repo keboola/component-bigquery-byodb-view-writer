@@ -24,8 +24,11 @@ KEY_COLUMNS = 'columns'
 
 # list of mandatory parameters => if some is missing,
 # component will fail with readable message on initialization.
-REQUIRED_PARAMETERS = [KEY_SERVICE_ACCOUNT, KEY_SOURCE_PROJECT_ID,
-                       KEY_DESTINATION_PROJECT_ID, KEY_DESTINATION_DATASET_ID, KEY_DESTINATION_VIEW_NAME]
+REQUIRED_PARAMETERS = [KEY_SERVICE_ACCOUNT,
+                       KEY_SOURCE_PROJECT_ID,
+                       KEY_DESTINATION_PROJECT_ID,
+                       KEY_DESTINATION_DATASET_ID,
+                       KEY_DESTINATION_VIEW_NAME]
 
 SCOPES = ['https://www.googleapis.com/auth/bigquery']
 
@@ -43,7 +46,6 @@ class Component(ComponentBase):
 
     def __init__(self):
         super().__init__()
-        self.location = None
 
     @staticmethod
     def validate_credentials(parameters):
@@ -67,8 +69,6 @@ class Component(ComponentBase):
         return parameters
 
     def get_bigquery_credentials(self):
-        self.location = self.configuration.config_data.get('image_parameters', {}).get('location') or 'EU'
-
         credentials = (self.configuration.config_data.get('image_parameters', {}).get(KEY_SERVICE_ACCOUNT)
                        or self.configuration.parameters.get(KEY_SERVICE_ACCOUNT))
 
@@ -94,7 +94,7 @@ class Component(ComponentBase):
             raise UserException('Another project storage backend is not supported!')
 
         # create bigquery client
-        bg = BigqueryClient(self.get_bigquery_credentials(), self.location)
+        bg = BigqueryClient(self.get_bigquery_credentials())
 
         # get destination datasets
         destination_dataset = bg.find_dataset(params.get(KEY_DESTINATION_PROJECT_ID),
@@ -121,7 +121,10 @@ class Component(ComponentBase):
                 logging.info(f"Source and destination datasets are in the same location: {source_dataset.location}")
 
             # create view
-            bg.create_view(destination_dataset, source_dataset, source_table, source_table_columns_descriptions,
+            bg.create_view(destination_dataset,
+                           source_dataset,
+                           source_table,
+                           source_table_columns_descriptions,
                            custom_columns,
                            params.get(KEY_DESTINATION_VIEW_NAME))
         else:
