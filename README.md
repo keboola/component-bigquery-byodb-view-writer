@@ -26,7 +26,8 @@ Component needs the Google Cloud [Service account](https://cloud.google.com/iam/
   - and the following permissions:
       - bigquery.tables.create
       - bigquery.tables.get
-      - bigquery.tables.update
+      - bigquery.tables.delete
+
 
 
 Configuration

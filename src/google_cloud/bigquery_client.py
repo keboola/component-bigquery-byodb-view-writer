@@ -13,8 +13,8 @@ class BigqueryClient:
             scopes=scopes
         )
 
-    def __init__(self, credentials, location):
-        self.client = bigquery.Client(credentials=credentials, location=location)
+    def __init__(self, credentials):
+        self.client = bigquery.Client(credentials=credentials)
 
     def _update_access(self, source_dataset, view):
         access_entries = source_dataset.access_entries
@@ -39,7 +39,7 @@ class BigqueryClient:
         except NotFound:
             raise Exception(f"Dataset {dataset_id_full} does not exist.")
 
-    def _get_view(self, dataset, view_id):
+    def _get_view(self, dataset, view_id) -> bigquery.Table:
         try:
             self.client.project = dataset.project
             return self.client.get_table(dataset.table(view_id))
@@ -63,23 +63,65 @@ class BigqueryClient:
                       `{source_project}`.`{source_dataset.dataset_id}`.`{source_table_id}`
               """
 
-    def create_view(self, destination_dataset, source_dataset, source_table, custom_columns, view_name):
-
-        query = self._compose_view_query(source_dataset.project, source_dataset, source_table, custom_columns)
-
+    def create_view(self,
+                    destination_dataset,
+                    source_dataset,
+                    source_table,
+                    source_table_columns_descriptions,
+                    custom_columns,
+                    view_name):
         self.client.project = destination_dataset.project
 
-        view = self._get_view(destination_dataset, view_name)
+        view_ref = self._get_view(destination_dataset, view_name)
 
-        if not view.created:
-            view_tmp = view
-            view_tmp.view_query = query
-            logging.info(f"Creating view {view_tmp.reference.to_api_repr()} with query {' '.join(query.split())}")
-            created_view = self.client.create_table(view_tmp)
-            logging.info(f"View {created_view.reference.to_api_repr()} has been created.")
-            self._update_access(source_dataset, created_view)
+        if view_ref.created:
+            self.client.delete_table(view_ref, not_found_ok=True)
+            logging.info(f"Deleting view {view_ref.reference.to_api_repr()}")
+
+        query = self._compose_view_query(source_dataset.project, source_dataset, source_table, custom_columns)
+        view = bigquery.Table(view_ref)
+        view.view_query = query
+
+        logging.info(f"Creating view {view.reference.to_api_repr()} with query {' '.join(query.split())}")
+        created_view = self.client.create_table(view)
+        logging.info(f"View {created_view.reference.to_api_repr()} has been created.")
+
+        if source_table_columns_descriptions:
+            # Apply column descriptions to the view
+            self._update_columns_description(created_view, source_table_columns_descriptions)
+
+        self._update_access(source_dataset, created_view)
+
+    def delete_view(self, destination_dataset, view_name):
+        view_ref = self._get_view(destination_dataset, view_name)
+        if view_ref.created:
+            self.client.delete_table(view_ref, not_found_ok=True)
+            logging.info(f"Deleting view {view_ref.reference.to_api_repr()}")
         else:
-            view.view_query = query
-            logging.info(f"Updating view {view.reference.to_api_repr()} with query {' '.join(query.split())}")
-            updated_view = self.client.update_table(view, ["view_query"])
-            logging.info(f"View {updated_view.reference.to_api_repr()} has been updated.")
+            logging.info(f"View {view_ref.reference.to_api_repr()} does not exist.")
+
+    def _update_columns_description(self, view, source_table_columns_descriptions):
+        if not source_table_columns_descriptions:
+            logging.info(f"No column descriptions to update for view {view.reference.to_api_repr()}")
+            return
+
+        logging.info(f"Updating view {view.reference.to_api_repr()} with column descriptions.")
+        new_schema = []
+
+        for field in view.schema:
+            description = None
+            if field.name in source_table_columns_descriptions:
+                description = source_table_columns_descriptions[field.name]
+                logging.info(f"Updating column {field.name} description to: {description}")
+
+            new_field = bigquery.SchemaField(
+                name=field.name,
+                field_type=field.field_type,
+                mode=field.mode,
+                description=description
+            )
+            new_schema.append(new_field)
+
+        view.schema = new_schema
+        self.client.update_table(view, ["schema"])
+        logging.info(f"View {view.reference.to_api_repr()} has been updated with column descriptions.")
