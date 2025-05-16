@@ -18,17 +18,34 @@ class BigqueryClient:
 
     def _update_access(self, source_dataset, view):
         access_entries = source_dataset.access_entries
-        access_entry = bigquery.AccessEntry(None, "view", view.reference.to_api_repr())
+        logging.info(f"Access entries before update: {access_entries}")
 
-        if access_entry not in access_entries:
-            access_entries.append(access_entry)
+        new_access_entry = bigquery.AccessEntry(
+            role=None,
+            entity_type="view",
+            entity_id={
+                "projectId": view.reference.project,
+                "datasetId": view.reference.dataset_id,
+                "tableId": view.reference.table_id
+            }
+        )
+
+        if not any(
+                entry.entity_type == "view" and
+                entry.entity_id.get("projectId") == view.reference.project and
+                entry.entity_id.get("datasetId") == view.reference.dataset_id and
+                entry.entity_id.get("tableId") == view.reference.table_id
+                for entry in access_entries
+        ):
+            access_entries.append(new_access_entry)
             source_dataset.access_entries = access_entries
-            self.client.project = source_dataset.project
-            self.client.update_dataset(source_dataset, ["access_entries"])
-            logging.info(f"View {view.reference.to_api_repr()} has been granted access to the source dataset.")
+            logging.info(f"View {view.reference} has been granted access to the source dataset")
         else:
-            logging.info(
-                f"View {view.reference.to_api_repr()} already has access to the source dataset. ({access_entry})")
+            logging.info(f"View {view.reference} already has access to the source dataset")
+
+        self.client.project = source_dataset.project
+        self.client.update_dataset(source_dataset, ["access_entries"])
+        logging.info(f"Access entries have been updated: {source_dataset.access_entries}")
 
     def find_dataset(self, project_id, dataset_id):
         dataset_id_full = f"{project_id}.{dataset_id}"
@@ -37,7 +54,7 @@ class BigqueryClient:
             self.client.project = project_id
             return self.client.get_dataset(dataset_id_full)
         except NotFound:
-            raise Exception(f"Dataset {dataset_id_full} does not exist.")
+            raise Exception(f"Dataset {dataset_id_full} does not exist")
 
     def _get_view(self, dataset, view_id) -> bigquery.Table:
         try:
