@@ -209,7 +209,7 @@ class Component(ComponentBase):
         Returns:
 
         """
-        bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
+        bq = BigqueryClient(credentials=self.get_bigquery_credentials())
         projects = bq.client.list_projects()
         kbc_project_id = self._get_kbc_project_id()
         # for secure we need to filter only current projects by prefix
@@ -228,7 +228,7 @@ class Component(ComponentBase):
         Returns:
 
         """
-        bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
+        bq = BigqueryClient(credentials=self.get_bigquery_credentials())
         projects = bq.client.list_projects()
         kbc_project_id = self._get_kbc_project_id()
         # for secure we need to filter only current projects by prefix
@@ -247,7 +247,7 @@ class Component(ComponentBase):
         bq_project = self.configuration.parameters.get(KEY_DESTINATION_PROJECT_ID)
         if not bq_project:
             raise UserException('No project selected.')
-        bq = BigqueryClient(credentials=self.get_bigquery_credentials(), location=self.location)
+        bq = BigqueryClient(credentials=self.get_bigquery_credentials())
         return [SelectElement(value=d.dataset_id, label=f'{d.dataset_id}') for d in bq.client.list_datasets(bq_project)]
 
 
