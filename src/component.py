@@ -1,6 +1,5 @@
 import logging
 import json
-import re
 from typing import List
 
 from kbcstorage.client import Client
@@ -244,20 +243,11 @@ class Component(ComponentBase):
         kbc_project_id = self._get_kbc_project_id()
         # for secure we need to filter only current projects by prefix
         # we cannot option to get KBC BQ projects id
-        project_pattern = (
-            rf'["\']?{re.escape(kbc_project_id)}["\']?|_{re.escape(kbc_project_id)}_'
-        )
-        projects = [
-            SelectElement(
-                value=p.project_id, label=f"{p.project_id} ({p.friendly_name})"
-            )
-            for p in projects
-            if p.project_id.search(project_pattern)
-        ]
+        project_prefix = f'sapi-{kbc_project_id}-'
+        projects = [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
+                    p.project_id.startswith(project_prefix)]
         if len(projects) == 0:
-            raise UserException(
-                "No projects found. You cannot have access to any project or list projects."
-            )
+            raise UserException('No projects found. You cannot have access to any project or list projects.')
         return projects
 
     @sync_action("get_destination_projects")
@@ -272,16 +262,9 @@ class Component(ComponentBase):
         kbc_project_id = self._get_kbc_project_id()
         # for secure we need to filter only current projects by prefix
         # we cannot option to get KBC BQ projects id
-        project_pattern = (
-            rf'["\']?{re.escape(kbc_project_id)}["\']?|_{re.escape(kbc_project_id)}_'
-        )
-        return [
-            SelectElement(
-                value=p.project_id, label=f"{p.project_id} ({p.friendly_name})"
-            )
-            for p in projects
-            if not p.project_id.search(project_pattern)
-        ]
+        project_prefix = f'sapi-{kbc_project_id}-'
+        return [SelectElement(value=p.project_id, label=f'{p.project_id} ({p.friendly_name})') for p in projects if
+                not p.project_id.startswith(project_prefix)]
 
     @sync_action("get_datasets")
     def get_datasets(self) -> List[SelectElement]:
