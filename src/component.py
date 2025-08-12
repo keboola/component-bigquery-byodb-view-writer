@@ -242,17 +242,16 @@ class Component(ComponentBase):
         bq = BigqueryClient(credentials=self.get_bigquery_credentials())
         projects = bq.client.list_projects()
         kbc_project_id = self._get_kbc_project_id()
-        # for secure we need to filter only current projects by prefix
-        # we cannot option to get KBC BQ projects id
-        project_pattern = (
-            rf'["\']?{re.escape(kbc_project_id)}["\']?|_{re.escape(kbc_project_id)}_'
-        )
+
+        # source project can be only the current KBC project
+        project_pattern = re.compile(rf'kbc-grpn-{kbc_project_id}-')
+
         projects = [
             SelectElement(
                 value=p.project_id, label=f"{p.project_id} ({p.friendly_name})"
             )
             for p in projects
-            if p.project_id.search(project_pattern)
+            if project_pattern.search(p.project_id)
         ]
         if len(projects) == 0:
             raise UserException(
@@ -270,18 +269,17 @@ class Component(ComponentBase):
         bq = BigqueryClient(credentials=self.get_bigquery_credentials())
         projects = bq.client.list_projects()
         kbc_project_id = self._get_kbc_project_id()
-        # for secure we need to filter only current projects by prefix
-        # we cannot option to get KBC BQ projects id
-        project_pattern = (
-            rf'["\']?{re.escape(kbc_project_id)}["\']?|_{re.escape(kbc_project_id)}_'
-        )
-        return [
+        # destination project CAN'T be the current KBC project
+        project_pattern = re.compile(rf'kbc-grpn-{kbc_project_id}-')
+
+        projects = [
             SelectElement(
                 value=p.project_id, label=f"{p.project_id} ({p.friendly_name})"
             )
             for p in projects
-            if not p.project_id.search(project_pattern)
+            if not project_pattern.search(p.project_id)
         ]
+        return projects
 
     @sync_action("get_datasets")
     def get_datasets(self) -> List[SelectElement]:
