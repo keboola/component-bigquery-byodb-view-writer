@@ -97,6 +97,7 @@ class BigqueryClient:
         source_table_columns_descriptions,
         custom_columns,
         view_name,
+        table_description,
     ):
         self.client.project = destination_dataset.project
 
@@ -111,6 +112,7 @@ class BigqueryClient:
         )
         view = bigquery.Table(view_ref)
         view.view_query = query
+        view.description = table_description
 
         logging.info(
             f"Creating view {view.reference.to_api_repr()} with query {' '.join(query.split())}"

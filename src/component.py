@@ -119,6 +119,10 @@ class Component(ComponentBase):
 
             tables = sapi_client.tables.detail(params.get(KEY_SOURCE_TABLE_ID))
 
+            tables_metadata = tables.get("metadata")
+
+            table_desc = next((item["value"] for item in tables_metadata if item["key"] == "KBC.description"), None)
+
             source_table_columns_descriptions = self._get_fields_descriptions(tables)
 
             # get destination datasets
@@ -147,6 +151,7 @@ class Component(ComponentBase):
                 source_table_columns_descriptions,
                 custom_columns,
                 params.get(KEY_DESTINATION_VIEW_NAME),
+                table_desc,
             )
         else:
             # delete view if exists
