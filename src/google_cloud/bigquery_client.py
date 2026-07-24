@@ -79,6 +79,7 @@ class BigqueryClient:
                 )
                 time.sleep(delay)
                 delay = min(delay * 2, 30)
+                self.client.project = source_dataset.project
                 source_dataset = self.client.get_dataset(
                     f"{source_dataset.project}.{source_dataset.dataset_id}"
                 )
