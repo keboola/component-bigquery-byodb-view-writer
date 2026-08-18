@@ -1,8 +1,9 @@
 import logging
+import time
 
 from google.cloud import bigquery
 from google.oauth2 import service_account
-from google.api_core.exceptions import NotFound
+from google.api_core.exceptions import NotFound, PreconditionFailed
 
 
 class BigqueryClient:
@@ -15,8 +16,8 @@ class BigqueryClient:
     def __init__(self, credentials):
         self.client = bigquery.Client(credentials=credentials)
 
-    def _update_access(self, source_dataset, view):
-        access_entries = source_dataset.access_entries
+    def _grant_view_access(self, dataset, view):
+        access_entries = dataset.access_entries
         logging.info(f"Access entries before update: {access_entries}")
 
         new_access_entry = bigquery.AccessEntry(
@@ -37,7 +38,7 @@ class BigqueryClient:
             for entry in access_entries
         ):
             access_entries.append(new_access_entry)
-            source_dataset.access_entries = access_entries
+            dataset.access_entries = access_entries
             logging.info(
                 f"View {view.reference} has been granted access to the source dataset"
             )
@@ -46,11 +47,42 @@ class BigqueryClient:
                 f"View {view.reference} already has access to the source dataset"
             )
 
-        self.client.project = source_dataset.project
-        self.client.update_dataset(source_dataset, ["access_entries"])
+        self.client.project = dataset.project
+        self.client.update_dataset(dataset, ["access_entries"])
         logging.info(
-            f"Access entries have been updated: {source_dataset.access_entries}"
+            f"Access entries have been updated: {dataset.access_entries}"
         )
+
+    def _update_access(self, source_dataset, view):
+        # ``update_dataset`` sends the dataset's ETag as an ``If-Match`` header, so a
+        # concurrent change to the source dataset's access entries (e.g. another view
+        # writer granting access at the same time) makes it fail with HTTP 412
+        # PreconditionFailed. Retry with a freshly fetched dataset (and thus a fresh
+        # ETag), re-merging the view access entry so any concurrent additions are kept.
+        # A persistent conflict still fails loudly after the last attempt.
+        attempts = 5
+        delay = 2
+        for attempt in range(1, attempts + 1):
+            try:
+                self._grant_view_access(source_dataset, view)
+                return
+            except PreconditionFailed as exc:
+                if attempt == attempts:
+                    raise
+                logging.warning(
+                    "Source dataset access entries changed concurrently "
+                    "(HTTP 412: %s), retry %d/%d in %ds; re-fetching the dataset.",
+                    exc,
+                    attempt,
+                    attempts,
+                    delay,
+                )
+                time.sleep(delay)
+                delay = min(delay * 2, 30)
+                self.client.project = source_dataset.project
+                source_dataset = self.client.get_dataset(
+                    f"{source_dataset.project}.{source_dataset.dataset_id}"
+                )
 
     def find_dataset(self, project_id, dataset_id):
         dataset_id_full = f"{project_id}.{dataset_id}"
