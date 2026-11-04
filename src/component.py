@@ -119,9 +119,7 @@ class Component(ComponentBase):
 
             tables = sapi_client.tables.detail(params.get(KEY_SOURCE_TABLE_ID))
 
-            tables_metadata = tables.get("metadata")
-
-            table_desc = next((item["value"] for item in tables_metadata if item["key"] == "KBC.description"), None)
+            table_desc = self._get_table_description(tables)
 
             source_table_columns_descriptions = self._get_fields_descriptions(tables)
 
@@ -159,13 +157,16 @@ class Component(ComponentBase):
             bg.delete_view(destination_dataset, params.get(KEY_DESTINATION_VIEW_NAME))
 
     @staticmethod
+    def _get_table_description(tables):
+        return (tables.get("definition") or {}).get("description")
+
+    @staticmethod
     def _get_fields_descriptions(tables):
         fields_descriptions = {}
-        columns_metadata = tables.get("columnMetadata")
-        for column_name, metadata in columns_metadata.items():
-            for item in metadata:
-                if "KBC.description" == item.get("key"):
-                    fields_descriptions[column_name] = item.get("value")
+        for column in (tables.get("definition") or {}).get("columns") or []:
+            description = (column.get("definition") or {}).get("description")
+            if description is not None:
+                fields_descriptions[column["name"]] = description
         return fields_descriptions
 
     @staticmethod
